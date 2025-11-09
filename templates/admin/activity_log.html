@@ -1,0 +1,29 @@
+{% extends "admin/layout.html" %}
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<h1 class="text-4xl font-extrabold text-white mb-8">User Activity Log</h1>
+
+<div class="bg-gray-800 p-6 rounded-xl">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="p-3">Timestamp</th>
+                    <th class="p-3">User</th>
+                    <th class="p-3">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                <tr class="border-b border-gray-700 hover:bg-gray-700">
+                    <td class="p-3 text-gray-400">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td class="p-3">{{ activity.user.username }} (ID: {{ activity.user.id }})</td>
+                    <td class="p-3">{{ activity.action }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

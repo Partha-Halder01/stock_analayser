@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis for {{ symbol }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; }
+        .prose h3 { font-size: 1.25rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #30363d; color: #f0f6fc; }
+        .prose p, .prose ul { font-size: 1rem; line-height: 1.7; }
+        .prose strong { color: #f0f6fc; font-weight: 600; }
+        .prose ul { list-style-position: outside; padding-left: 1.25rem; }
+        .prose li::marker { color: #58a6ff; }
+        .glow-card { background-color: #161b22; border: 1px solid #30363d; transition: all 0.3s ease; }
+        .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); border-color: rgba(16, 185, 129, 0.5); }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+        .glow-yellow { box-shadow: 0 0 20px rgba(234, 179, 8, 0.3); border-color: rgba(234, 179, 8, 0.5); }
+        [x-cloak] { display: none !important; }
+        .price-flash-up { animation: flash-green 0.8s ease-out; }
+        .price-flash-down { animation: flash-red 0.8s ease-out; }
+        @keyframes flash-green { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(16, 185, 129, 0.3); } }
+        @keyframes flash-red { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(239, 68, 68, 0.3); } }
+    </style>
+    
+    <!-- FIX: Moved component definitions to the head to run before Alpine initializes -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('priceUpdater', (symbol, initialPrice) => ({
+                symbol: symbol,
+                lastPrice: initialPrice,
+                init() {
+                    setInterval(() => { this.fetchPrice(); }, 30000);
+                },
+                fetchPrice() {
+                    fetch(`/get_live_price/${this.symbol}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) { console.error(data.error); return; }
+                            const priceEl = document.getElementById('live-price');
+                            const changeEl = document.getElementById('live-change');
+                            const newPrice = data.price;
+                            priceEl.textContent = `$${newPrice.toFixed(2)}`;
+                            changeEl.textContent = `${data.change.toFixed(2)} (${data.changesPercentage.toFixed(2)}%)`;
+                            changeEl.classList.toggle('text-red-400', data.change < 0);
+                            changeEl.classList.toggle('text-green-400', data.change >= 0);
+                            priceEl.classList.remove('price-flash-up', 'price-flash-down');
+                            if (newPrice > this.lastPrice) { void priceEl.offsetWidth; priceEl.classList.add('price-flash-up'); } 
+                            else if (newPrice < this.lastPrice) { void priceEl.offsetWidth; priceEl.classList.add('price-flash-down'); }
+                            this.lastPrice = newPrice;
+                        });
+                }
+            }));
+            
+            Alpine.data('chatbot', (historyId) => ({
+                question: '', 
+                loading: false, 
+                error: '', 
+                historyId: historyId,
+                messages: [
+                    { role: 'CHATBOT', message: 'Hello! I am your AI assistant. The initial analysis is above. How can I help you dig deeper?' }
+                ],
+                init() {
+                    this.scrollToBottom();
+                },
+                sendMessage() {
+                    if (!this.question.trim() || this.loading) return;
+                    
+                    const userMessage = { role: 'USER', message: this.question };
+                    this.messages.push(userMessage);
+                    this.scrollToBottom();
+
+                    const currentQuestion = this.question;
+                    this.question = '';
+                    this.loading = true; 
+                    this.error = '';
+
+                    const apiChatHistory = this.messages.slice(0, -1).map(m => ({
+                        role: m.role,
+                        message: m.message
+                    }));
+
+                    fetch('/ask_ai', {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            question: currentQuestion, 
+                            history_id: this.historyId,
+                            chat_history: apiChatHistory
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        let aiMessage;
+                        if (data.error) {
+                            this.error = data.error;
+                            aiMessage = { role: 'CHATBOT', message: `<span class="text-red-400">${data.error}</span>` };
+                        } else {
+                            aiMessage = { role: 'CHATBOT', message: data.answer };
+                            const coinDisplay = document.getElementById('user-coins-display');
+                            if(coinDisplay) {
+                                coinDisplay.textContent = data.coins_remaining;
+                            }
+                        }
+                        this.messages.push(aiMessage);
+                    })
+                    .catch(err => { 
+                        this.error = 'An unexpected network error occurred.'; 
+                        console.error(err); 
+                    })
+                    .finally(() => { 
+                        this.loading = false; 
+                        this.scrollToBottom();
+                    });
+                },
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        this.$refs.chatWindow.scrollTop = this.$refs.chatWindow.scrollHeight;
+                    });
+                }
+            }));
+        });
+    </script>
+    <!-- FIX: Added defer to ensure AlpineJS runs after the DOM is parsed and components are registered -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+</head>
+<body class="antialiased" x-data="priceUpdater('{{ symbol }}', {{ data.quote.price or 0.0 }})">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        <header class="flex justify-between items-center mb-8">
+            <a href="/" class="flex items-center gap-3 group">
+                <i class="fa-solid fa-robot text-3xl text-blue-500 group-hover:text-blue-400 transition"></i>
+                <h1 class="text-2xl md:text-3xl font-bold text-white group-hover:text-gray-300 transition">AI Stock Analyzer</h1>
+            </a>
+            <a href="/" class="text-sm bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">New Analysis</a>
+        </header>
+
+        <div class="glow-card p-6 rounded-xl mb-8">
+            <div class="flex flex-col sm:flex-row items-center mb-6">
+                <img src="{{ data.profile.image }}" alt="{{ data.profile.companyName }} logo" class="w-16 h-16 rounded-full mr-0 sm:mr-5 mb-4 sm:mb-0 border-2 border-gray-600 bg-gray-700">
+                <div class="text-center sm:text-left">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white">{{ data.profile.companyName }}</h2>
+                    <p class="text-lg text-gray-400">{{ symbol }} &bull; {{ data.profile.exchangeShortName }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                {% set stats = [
+                    {'icon': 'fa-dollar-sign', 'label': 'Price', 'id': 'live-price', 'value': '$' ~ "%.2f"|format(data.quote.price)},
+                    {'icon': 'fa-chart-simple', 'label': "Day's Change", 'id': 'live-change', 'value': "%.2f"|format(data.quote.change) ~ ' (' ~ "%.2f"|format(data.quote.changesPercentage) ~ '%)', 'color_class': 'text-green-400' if data.quote.change >= 0 else 'text-red-400'},
+                    {'icon': 'fa-building', 'label': 'Market Cap', 'value': '$' ~ "{:,.0f}".format(data.profile.mktCap)},
+                    {'icon': 'fa-chart-pie', 'label': 'P/E Ratio', 'value': "%.2f"|format(data.quote.pe) if data.quote.pe else 'N/A'},
+                    {'icon': 'fa-arrow-right-arrow-left', 'label': 'Volume', 'value': "{:,.0f}".format(data.quote.volume)}
+                ] %}
+                {% for stat in stats %}
+                <div class="bg-[#0D1117] p-4 rounded-lg border border-gray-700/50">
+                    <div class="flex items-center text-gray-400 text-sm mb-2"><i class="fas {{ stat.icon }} mr-2"></i><span>{{ stat.label }}</span></div>
+                    <p id="{{ stat.id | default('') }}" class="text-2xl font-bold {{ stat.color_class | default('text-white') }} transition-colors duration-300">{{ stat.value }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glow-card p-6 sm:p-8 rounded-xl">
+                <h3 class="text-2xl font-bold text-white mb-4 flex items-center gap-3"><i class="fa-solid fa-file-invoice text-2xl text-blue-500"></i>Initial Analysis</h3>
+                <div class="prose max-w-none prose-invert">{{ analysis | markdown | safe }}</div>
+            </div>
+            
+            <div class="lg:col-span-1 space-y-8">
+                <div class="sticky top-8">
+                    <div class="glow-card p-6 rounded-xl {{ 'glow-' + rec_color }}">
+                        <h3 class="text-lg font-bold text-white mb-4 text-center">AI Recommendation</h3>
+                        {% set color_map = { 'green': 'bg-green-500/10 border-green-500/50 text-green-300', 'red': 'bg-red-500/10 border-red-500/50 text-red-300', 'yellow': 'bg-yellow-500/10 border-yellow-500/50 text-yellow-300', 'gray': 'bg-gray-500/10 border-gray-500/50 text-gray-300' } %}
+                        <div class="text-center p-8 rounded-lg border {{ color_map[rec_color] }}"><div class="text-5xl font-extrabold">{{ recommendation }}</div></div>
+                    </div>
+
+                    <div x-data="chatbot({{ history_id or 'null' }})" class="glow-card rounded-xl mt-8 flex flex-col">
+                        <h3 class="text-lg font-bold text-white text-center p-4 border-b border-[#30363D]">AI Chatbot</h3>
+                        <p class="text-xs text-center text-gray-400 py-2">Costs 1 coin per question.</p>
+                        
+                        <div x-ref="chatWindow" class="flex-1 p-4 space-y-4 overflow-y-auto h-96">
+                            <template x-for="(message, index) in messages" :key="index">
+                                <div class="flex" :class="message.role === 'USER' ? 'justify-end' : 'justify-start'">
+                                    <div class="p-3 rounded-lg max-w-xs break-words" :class="message.role === 'USER' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'">
+                                        <div x-html="message.message"></div>
+                                    </div>
+                                </div>
+                            </template>
+                             <div x-show="loading" class="flex justify-start">
+                                <div class="bg-gray-700 text-gray-200 p-3 rounded-lg">
+                                    <i class="fas fa-spinner fa-spin"></i> AI is thinking...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <form @submit.prevent="sendMessage" class="p-4 border-t border-[#30363D] relative">
+                            <input type="text" x-model="question" :disabled="loading" placeholder="Ask a follow-up question..." class="w-full py-3 pl-4 pr-12 bg-[#0D1117] border-2 border-[#30363d] rounded-lg text-white focus:outline-none focus:border-blue-500 transition disabled:opacity-50">
+                            <button type="submit" :disabled="loading || !question.trim()" class="absolute inset-y-0 right-4 px-4 text-gray-400 hover:text-white disabled:text-gray-600 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        <p x-show="error" x-text="error" class="text-red-400 text-sm p-4 pt-0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto glass-card p-8 rounded-xl">
+    <h1 class="text-4xl font-extrabold text-white text-center mb-6">About AI Stock Analyzer</h1>
+    <div class="prose prose-invert lg:prose-xl max-w-none text-gray-300 space-y-4">
+        <p>
+            Welcome to AI Stock Analyzer, your personal AI-powered assistant for investment research. Our mission is to democratize financial data analysis, making sophisticated stock insights accessible to everyone, from seasoned investors to curious beginners.
+        </p>
+        <p>
+            We leverage cutting-edge large language models and real-time financial data from trusted sources to provide you with concise, actionable, and easy-to-understand stock analysis. Instead of spending hours sifting through charts and reports, you can get a comprehensive summary and a clear recommendation in seconds.
+        </p>
+        <h3 class="text-2xl font-bold text-white !mt-8">Our Technology</h3>
+        <p>
+            Our platform is built on a robust Python backend using the Flask framework. For AI-driven insights, we integrate with Cohere's powerful Command R+ model, and for financial data, we rely on the comprehensive APIs provided by Financial Modeling Prep.
+        </p>
+    </div>
+</div>
+{% endblock %}

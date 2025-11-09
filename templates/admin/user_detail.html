@@ -1,0 +1,89 @@
+{% extends "admin/layout.html" %}
+{% block title %}User Details{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.manage_users') }}" class="text-blue-400 hover:underline mb-6 inline-block">&larr; Back to All Users</a>
+<h1 class="text-4xl font-extrabold text-white mb-8">User: {{ user.username }}</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- User Info & Actions -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-gray-800 p-6 rounded-xl">
+            <h3 class="text-xl font-bold mb-4">User Information</h3>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Coins:</strong> {{ user.coins }}</p>
+            <p><strong>Joined:</strong> {{ user.id }}</p> <!-- Assuming ID is incremental -->
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl">
+            <h3 class="text-xl font-bold mb-4">Actions</h3>
+            <form action="{{ url_for('admin.give_coins', user_id=user.id) }}" method="POST" class="flex gap-2">
+                <input type="number" name="coins" placeholder="Amount" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2" required>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Give Coins</button>
+            </form>
+            <div class="mt-4">
+                {% if user.is_blocked %}
+                <a href="{{ url_for('admin.unblock_user', user_id=user.id) }}" class="w-full text-center block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Unblock User</a>
+                {% else %}
+                <a href="{{ url_for('admin.block_user', user_id=user.id) }}" class="w-full text-center block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Block User</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity -->
+    <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl">
+        <h3 class="text-xl font-bold mb-4">Analysis History</h3>
+        <div class="overflow-y-auto max-h-96">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2">Symbol</th>
+                        <th class="p-2">Recommendation</th>
+                        <th class="p-2">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for analysis in user.analyses %}
+                    <tr class="border-b border-gray-700">
+                        <td class="p-2">{{ analysis.symbol }}</td>
+                        <td class="p-2">{{ analysis.recommendation }}</td>
+                        <td class="p-2 text-sm text-gray-400">{{ analysis.date_analyzed.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="p-4 text-center">No analysis history.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="text-xl font-bold mb-4 mt-8">Transaction History</h3>
+        <div class="overflow-y-auto max-h-96">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2">Order ID</th>
+                        <th class="p-2">Amount</th>
+                        <th class="p-2">Coins</th>
+                        <th class="p-2">Status</th>
+                        <th class="p-2">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in user.orders %}
+                    <tr class="border-b border-gray-700">
+                        <td class="p-2 text-sm">{{ order.order_id }}</td>
+                        <td class="p-2">₹{{ order.amount }}</td>
+                        <td class="p-2">{{ order.coins_purchased }}</td>
+                        <td class="p-2">{{ order.status }}</td>
+                        <td class="p-2 text-sm text-gray-400">{{ order.date_created.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="p-4 text-center">No transaction history.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

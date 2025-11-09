@@ -1,0 +1,929 @@
+{% extends "layout.html" %}
+{% block title %}Welcome to AI Stock Analyzer{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #0a0f1e;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #ffffff;
+        overflow-x: hidden;
+    }
+
+    /* 3D Animated Background */
+    .background-3d {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+        background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+    }
+
+    /* Floating 3D Cubes */
+    .cube {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        transform-style: preserve-3d;
+        animation: float-rotate 20s infinite ease-in-out;
+    }
+
+    .cube-face {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background: rgba(99, 102, 241, 0.1);
+        border: 2px solid rgba(99, 102, 241, 0.4);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .cube-face.front  { transform: rotateY(0deg) translateZ(50px); }
+    .cube-face.back   { transform: rotateY(180deg) translateZ(50px); }
+    .cube-face.right  { transform: rotateY(90deg) translateZ(50px); }
+    .cube-face.left   { transform: rotateY(-90deg) translateZ(50px); }
+    .cube-face.top    { transform: rotateX(90deg) translateZ(50px); }
+    .cube-face.bottom { transform: rotateX(-90deg) translateZ(50px); }
+
+    @keyframes float-rotate {
+        0%, 100% {
+            transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+        25% {
+            transform: translateY(-50px) rotateX(90deg) rotateY(90deg) rotateZ(45deg);
+        }
+        50% {
+            transform: translateY(-20px) rotateX(180deg) rotateY(180deg) rotateZ(90deg);
+        }
+        75% {
+            transform: translateY(-70px) rotateX(270deg) rotateY(270deg) rotateZ(135deg);
+        }
+    }
+
+    .cube:nth-child(1) {
+        top: 10%;
+        left: 10%;
+        animation-duration: 25s;
+        animation-delay: 0s;
+    }
+
+    .cube:nth-child(2) {
+        top: 60%;
+        left: 80%;
+        animation-duration: 30s;
+        animation-delay: 5s;
+    }
+
+    .cube:nth-child(3) {
+        top: 80%;
+        left: 20%;
+        animation-duration: 22s;
+        animation-delay: 3s;
+    }
+
+    /* Animated Spheres */
+    .sphere {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, rgba(139, 92, 246, 0.4), rgba(99, 102, 241, 0.1));
+        box-shadow: 
+            0 0 60px rgba(99, 102, 241, 0.6),
+            inset -20px -20px 50px rgba(0, 0, 0, 0.3),
+            inset 20px 20px 50px rgba(255, 255, 255, 0.1);
+        animation: sphere-float 15s infinite ease-in-out;
+    }
+
+    @keyframes sphere-float {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+        33% {
+            transform: translate(100px, -100px) scale(1.2);
+        }
+        66% {
+            transform: translate(-80px, 80px) scale(0.9);
+        }
+    }
+
+    .sphere-1 {
+        width: 200px;
+        height: 200px;
+        top: 15%;
+        right: 15%;
+        animation-duration: 20s;
+    }
+
+    .sphere-2 {
+        width: 150px;
+        height: 150px;
+        bottom: 20%;
+        left: 10%;
+        animation-duration: 18s;
+        animation-delay: 3s;
+    }
+
+    .sphere-3 {
+        width: 120px;
+        height: 120px;
+        top: 50%;
+        right: 40%;
+        animation-duration: 25s;
+        animation-delay: 6s;
+    }
+
+    /* Floating Particles */
+    .particle {
+        position: absolute;
+        background: rgba(99, 102, 241, 0.6);
+        border-radius: 50%;
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+        animation: particle-rise 15s infinite ease-in;
+    }
+
+    @keyframes particle-rise {
+        0% {
+            transform: translateY(100vh) translateX(0) scale(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(var(--drift)) scale(1);
+            opacity: 0;
+        }
+    }
+
+    /* Generate particles dynamically via inline styles */
+
+    /* Geometric Grid Lines */
+    .grid-lines {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(99, 102, 241, 0.1) 2px, transparent 2px),
+            linear-gradient(90deg, rgba(99, 102, 241, 0.1) 2px, transparent 2px);
+        background-size: 100px 100px;
+        transform: perspective(500px) rotateX(60deg);
+        transform-origin: center center;
+        animation: grid-move 20s linear infinite;
+    }
+
+    @keyframes grid-move {
+        0% {
+            background-position: 0 0;
+        }
+        100% {
+            background-position: 100px 100px;
+        }
+    }
+
+    /* Glowing Rings */
+    .ring {
+        position: absolute;
+        border: 3px solid rgba(99, 102, 241, 0.3);
+        border-radius: 50%;
+        box-shadow: 
+            0 0 30px rgba(99, 102, 241, 0.5),
+            inset 0 0 30px rgba(99, 102, 241, 0.3);
+        animation: ring-pulse 8s infinite ease-in-out;
+    }
+
+    @keyframes ring-pulse {
+        0%, 100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 0.3;
+        }
+        50% {
+            transform: scale(1.5) rotate(180deg);
+            opacity: 0.8;
+        }
+    }
+
+    .ring-1 {
+        width: 300px;
+        height: 300px;
+        top: 20%;
+        left: 5%;
+        animation-duration: 12s;
+    }
+
+    .ring-2 {
+        width: 250px;
+        height: 250px;
+        bottom: 15%;
+        right: 10%;
+        animation-duration: 15s;
+        animation-delay: 4s;
+    }
+
+    /* Light Beams */
+    .light-beam {
+        position: absolute;
+        width: 2px;
+        height: 200px;
+        background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.6), transparent);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+        animation: beam-move 10s infinite ease-in-out;
+    }
+
+    @keyframes beam-move {
+        0%, 100% {
+            transform: translateY(-100px) rotate(0deg);
+            opacity: 0;
+        }
+        50% {
+            transform: translateY(100px) rotate(180deg);
+            opacity: 1;
+        }
+    }
+
+    .light-beam:nth-child(1) { left: 20%; animation-delay: 0s; }
+    .light-beam:nth-child(2) { left: 50%; animation-delay: 3s; }
+    .light-beam:nth-child(3) { left: 80%; animation-delay: 6s; }
+
+    /* Main Content Container */
+    .main-content {
+        position: relative;
+        z-index: 10;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 120px 24px 80px;
+    }
+
+    /* Badge */
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 100px;
+        padding: 8px 20px;
+        margin-bottom: 32px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #a5b4fc;
+        animation: fadeInUp 0.8s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .badge-dot {
+        width: 8px;
+        height: 8px;
+        background: #6366f1;
+        border-radius: 50%;
+        box-shadow: 0 0 12px #6366f1;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    /* Main Heading */
+    .hero-title {
+        font-size: clamp(48px, 8vw, 84px);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 24px;
+        letter-spacing: -0.03em;
+        animation: fadeInUp 0.8s ease 0.2s backwards;
+        text-shadow: 0 0 80px rgba(99, 102, 241, 0.5);
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Subtitle */
+    .hero-subtitle {
+        font-size: clamp(18px, 2vw, 22px);
+        line-height: 1.6;
+        color: #94a3b8;
+        max-width: 720px;
+        margin: 0 auto 48px;
+        animation: fadeInUp 0.8s ease 0.4s backwards;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Search Box */
+    .search-wrapper {
+        max-width: 680px;
+        margin: 0 auto 60px;
+        animation: fadeInUp 0.8s ease 0.6s backwards;
+    }
+
+    .search-container {
+        position: relative;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 16px;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .search-container:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .search-container:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-icon {
+        margin-left: 16px;
+        color: #64748b;
+        font-size: 20px;
+    }
+
+    .search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 17px;
+        padding: 16px 8px;
+        font-weight: 500;
+    }
+
+    .search-input::placeholder {
+        color: #64748b;
+    }
+
+    .search-btn {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 14px 32px;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .search-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Popular Stocks */
+    .popular-stocks {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        animation: fadeInUp 0.8s ease 0.8s backwards;
+    }
+
+    .popular-label {
+        font-size: 14px;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .stock-chip {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .stock-chip:hover {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: #6366f1;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    /* Stats Section */
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 32px;
+        max-width: 900px;
+        margin: 80px auto;
+        padding: 0 24px;
+    }
+
+    .stat-card {
+        text-align: center;
+        animation: fadeInUp 0.8s ease backwards;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(20px);
+        padding: 32px 24px;
+        border-radius: 16px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 1s; }
+    .stat-card:nth-child(2) { animation-delay: 1.2s; }
+    .stat-card:nth-child(3) { animation-delay: 1.4s; }
+
+    .stat-number {
+        font-size: 48px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 16px;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    /* Features Section */
+    .features-section {
+        padding: 100px 24px;
+        text-align: center;
+    }
+
+    .section-header {
+        max-width: 800px;
+        margin: 0 auto 80px;
+    }
+
+    .section-title {
+        font-size: clamp(36px, 5vw, 56px);
+        font-weight: 800;
+        margin-bottom: 16px;
+        letter-spacing: -0.02em;
+    }
+
+    .section-description {
+        font-size: 20px;
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 20px;
+        padding: 40px 32px;
+        text-align: left;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        font-size: 24px;
+    }
+
+    .feature-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #ffffff;
+    }
+
+    .feature-description {
+        font-size: 16px;
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    /* Steps Section */
+    .steps-section {
+        padding: 100px 24px;
+        background: rgba(15, 23, 42, 0.3);
+        margin: 60px 0;
+    }
+
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 48px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .step-card {
+        text-align: center;
+        position: relative;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(20px);
+        padding: 48px 32px;
+        border-radius: 20px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .step-number {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        font-size: 32px;
+        font-weight: 800;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .step-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .step-description {
+        font-size: 16px;
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 80px 16px 60px;
+        }
+
+        .search-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-icon {
+            margin-left: 0;
+        }
+
+        .search-btn {
+            width: 100%;
+        }
+
+        .popular-stocks {
+            flex-direction: column;
+        }
+
+        .stats-section {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .feature-grid,
+        .steps-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .cube, .sphere, .ring {
+            display: none;
+        }
+    }
+</style>
+
+<!-- 3D Animated Background -->
+<div class="background-3d">
+    <!-- Animated Grid -->
+    <div class="grid-lines"></div>
+
+    <!-- 3D Cubes -->
+    <div class="cube">
+        <div class="cube-face front"></div>
+        <div class="cube-face back"></div>
+        <div class="cube-face right"></div>
+        <div class="cube-face left"></div>
+        <div class="cube-face top"></div>
+        <div class="cube-face bottom"></div>
+    </div>
+    <div class="cube">
+        <div class="cube-face front"></div>
+        <div class="cube-face back"></div>
+        <div class="cube-face right"></div>
+        <div class="cube-face left"></div>
+        <div class="cube-face top"></div>
+        <div class="cube-face bottom"></div>
+    </div>
+    <div class="cube">
+        <div class="cube-face front"></div>
+        <div class="cube-face back"></div>
+        <div class="cube-face right"></div>
+        <div class="cube-face left"></div>
+        <div class="cube-face top"></div>
+        <div class="cube-face bottom"></div>
+    </div>
+
+    <!-- 3D Spheres -->
+    <div class="sphere sphere-1"></div>
+    <div class="sphere sphere-2"></div>
+    <div class="sphere sphere-3"></div>
+
+    <!-- Glowing Rings -->
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+
+    <!-- Light Beams -->
+    <div class="light-beam"></div>
+    <div class="light-beam"></div>
+    <div class="light-beam"></div>
+
+    <!-- Floating Particles -->
+    <div class="particle" style="width: 4px; height: 4px; left: 10%; animation-delay: 0s; --drift: 50px;"></div>
+    <div class="particle" style="width: 6px; height: 6px; left: 20%; animation-delay: 2s; --drift: -30px;"></div>
+    <div class="particle" style="width: 3px; height: 3px; left: 30%; animation-delay: 4s; --drift: 70px;"></div>
+    <div class="particle" style="width: 5px; height: 5px; left: 40%; animation-delay: 1s; --drift: -50px;"></div>
+    <div class="particle" style="width: 4px; height: 4px; left: 50%; animation-delay: 3s; --drift: 40px;"></div>
+    <div class="particle" style="width: 6px; height: 6px; left: 60%; animation-delay: 5s; --drift: -60px;"></div>
+    <div class="particle" style="width: 3px; height: 3px; left: 70%; animation-delay: 2.5s; --drift: 55px;"></div>
+    <div class="particle" style="width: 5px; height: 5px; left: 80%; animation-delay: 4.5s; --drift: -45px;"></div>
+    <div class="particle" style="width: 4px; height: 4px; left: 90%; animation-delay: 1.5s; --drift: 65px;"></div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            AI-Powered Stock Analysis
+        </div>
+
+        <h1 class="hero-title">
+            Make Smarter<br>
+            <span class="gradient-text">Investment Decisions</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Get instant AI-powered stock analysis with clear buy, sell, or hold recommendations. 
+            Cut through the noise and invest with confidence.
+        </p>
+
+        <!-- Search Box -->
+        <div class="search-wrapper">
+            <form action="javascript:void(0);" onsubmit="handleSearch()">
+                <div class="search-container">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input 
+                        type="text" 
+                        id="symbol" 
+                        name="symbol" 
+                        class="search-input" 
+                        placeholder="Enter stock symbol (e.g., AAPL, TSLA, GOOGL)" 
+                        required
+                    >
+                    <button type="submit" class="search-btn">
+                        Analyze Now →
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Popular Stocks -->
+        <div class="popular-stocks">
+            <span class="popular-label">Popular:</span>
+            <span class="stock-chip" onclick="quickSearch('AAPL')">AAPL</span>
+            <span class="stock-chip" onclick="quickSearch('TSLA')">TSLA</span>
+            <span class="stock-chip" onclick="quickSearch('GOOGL')">GOOGL</span>
+            <span class="stock-chip" onclick="quickSearch('NVDA')">NVDA</span>
+            <span class="stock-chip" onclick="quickSearch('MSFT')">MSFT</span>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-number">10K+</div>
+            <div class="stat-label">Stocks Analyzed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">98%</div>
+            <div class="stat-label">Accuracy Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">&lt;5s</div>
+            <div class="stat-label">Analysis Time</div>
+        </div>
+    </div>
+
+    <!-- Steps Section -->
+    <section class="steps-section">
+        <div class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-description">Get professional stock analysis in three simple steps</p>
+        </div>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Enter Stock Symbol</h3>
+                <p class="step-description">
+                    Simply type in any stock ticker symbol like AAPL or TSLA to get started
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="step-title">AI Analyzes Data</h3>
+                <p class="step-description">
+                    Our advanced AI processes real-time market data, news, and financial metrics
+                </p>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Get Recommendations</h3>
+                <p class="step-description">
+                    Receive clear buy, sell, or hold signals with detailed reasoning
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2 class="section-title">Powerful Features</h2>
+            <p class="section-description">Everything you need to make informed investment decisions</p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-brain" style="color: #6366f1;"></i>
+                </div>
+                <h3 class="feature-title">AI-Powered Analysis</h3>
+                <p class="feature-description">
+                    Advanced machine learning algorithms analyze thousands of data points to provide 
+                    accurate recommendations based on real-time market conditions.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-chart-line" style="color: #8b5cf6;"></i>
+                </div>
+                <h3 class="feature-title">Real-Time Data</h3>
+                <p class="feature-description">
+                    Access up-to-the-minute market data, price movements, and financial metrics 
+                    to stay ahead of market trends and opportunities.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-comments" style="color: #ec4899;"></i>
+                </div>
+                <h3 class="feature-title">AI Chatbot Support</h3>
+                <p class="feature-description">
+                    Ask follow-up questions, compare stocks, and get detailed explanations 
+                    through our intelligent chatbot assistant.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-alt" style="color: #10b981;"></i>
+                </div>
+                <h3 class="feature-title">Risk Assessment</h3>
+                <p class="feature-description">
+                    Comprehensive risk analysis helps you understand potential downsides and 
+                    make balanced investment decisions.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-newspaper" style="color: #f59e0b;"></i>
+                </div>
+                <h3 class="feature-title">News Integration</h3>
+                <p class="feature-description">
+                    Stay informed with relevant news articles and market sentiment analysis 
+                    that might impact your investments.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-mobile-alt" style="color: #06b6d4;"></i>
+                </div>
+                <h3 class="feature-title">Mobile Friendly</h3>
+                <p class="feature-description">
+                    Access powerful stock analysis tools anywhere, anytime with our fully 
+                    responsive mobile-optimized platform.
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function handleSearch() {
+        const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+        if (symbol) {
+            window.location.href = `/loading/${symbol}`;
+        }
+    }
+
+    function quickSearch(symbol) {
+        document.getElementById('symbol').value = symbol;
+        handleSearch();
+    }
+</script>
+{% endblock %}

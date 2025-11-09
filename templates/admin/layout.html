@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - AI Stock Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white min-h-screen p-4 sticky top-0">
+        <div class="text-2xl font-bold mb-8 text-center">Admin Panel</div>
+        <nav>
+            <a href="{{ url_for('admin.dashboard') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white">
+                <i class="fas fa-tachometer-alt w-6 mr-2"></i>Dashboard
+            </a>
+            <a href="{{ url_for('admin.manage_users') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white">
+                <i class="fas fa-users w-6 mr-2"></i>Manage Users
+            </a>
+            <a href="{{ url_for('admin.activity_log') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white">
+                <i class="fas fa-history w-6 mr-2"></i>Activity Log
+            </a>
+            <a href="{{ url_for('home') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white mt-8">
+                <i class="fas fa-arrow-left w-6 mr-2"></i>Back to Main Site
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-10">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set color = 'blue' if category == 'info' else 'green' if category == 'success' else 'red' if category == 'danger' else 'yellow' %}
+                    <div class="bg-{{ color }}-500/20 border border-{{ color }}-500/40 text-{{ color }}-200 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                      <strong class="font-bold">{{ category.title() }}!</strong>
+                      <span class="block sm:inline">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+
+templates/base.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stock Analyzer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Loader Overlay -->
+    <div class="loader-overlay" id="loader-overlay">
+        <div class="loader"></div>
+        <div class="loader-text">Researching...</div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>Stock<span>AI</span> Analyzer</h1>
+            <p>Your AI-Powered Investment Research Assistant</p>
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        // Show loader on form submission
+        const searchForm = document.querySelector('.search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function() {
+                document.getElementById('loader-overlay').style.display = 'flex';
+            });
+        }
+    </script>
+</body>
+</html>

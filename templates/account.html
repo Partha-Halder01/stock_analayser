@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white">My Account</h1>
+        <p class="text-lg text-gray-400 mt-2">Manage your profile and subscription plans.</p>
+    </div>
+
+    <!-- User Info & Balance -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div class="lg:col-span-2 glass-card p-6 rounded-xl">
+            <h3 class="text-2xl font-bold text-white mb-4">Account Details</h3>
+            <div class="space-y-3 text-md text-gray-300">
+                <p><strong>Username:</strong> <span class="text-white">{{ current_user.username }}</span></p>
+                <p><strong>Email:</strong> <span class="text-white">{{ current_user.email }}</span></p>
+            </div>
+        </div>
+        <div class="glass-card p-6 rounded-xl text-center flex flex-col justify-center items-center">
+             <h3 class="text-2xl font-bold text-white mb-2">Current Balance</h3>
+             <p class="text-6xl font-extrabold text-amber-400 my-2 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-coins"></i>
+                <span>{{ current_user.coins }}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Subscription Plans Section -->
+    <div class="text-center mb-12">
+        <h2 class="text-4xl font-extrabold text-white">Our Plans</h2>
+        <p class="text-lg text-gray-400 mt-2">Choose a plan that fits your needs. More coins, more value.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {% set plans = [
+            {'name': 'Starter', 'coins': 50, 'price': 1, 'features': ['50 Analyses', 'Basic Support'], 'popular': False},
+            {'name': 'Pro', 'coins': 500, 'price': 80, 'features': ['500 Analyses', 'Priority Support', 'Early access to new features'], 'popular': True},
+            {'name': 'Enterprise', 'coins': 1000, 'price': 150, 'features': ['1000 Analyses', 'Dedicated Support', 'API Access'], 'popular': False}
+        ] %}
+
+        {% for plan in plans %}
+        <div class="glass-card rounded-xl p-8 flex flex-col text-center transform hover:-translate-y-2 transition-transform duration-300
+            {% if plan.popular %} border-2 border-blue-500 shadow-2xl shadow-blue-500/20 {% endif %}">
+            
+            {% if plan.popular %}
+            <div class="absolute top-0 right-8 -mt-4">
+                <div class="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Most Popular</div>
+            </div>
+            {% endif %}
+
+            <h3 class="text-2xl font-bold text-white">{{ plan.name }}</h3>
+            <p class="mt-4 text-5xl font-extrabold text-white">
+                ₹{{ plan.price }}
+            </p>
+            <p class="mt-2 text-amber-400 font-semibold">{{ plan.coins }} Coins</p>
+            
+            <ul class="mt-6 space-y-4 text-gray-300 flex-grow">
+                {% for feature in plan.features %}
+                <li><i class="fa-solid fa-check text-green-400 mr-2"></i> {{ feature }}</li>
+                {% endfor %}
+            </ul>
+
+            <button onclick="buyCoins('{{ plan.price }}', '{{ plan.coins }}')"
+                    class="w-full mt-8 font-bold py-3 px-4 rounded-lg transition 
+                    {% if plan.popular %} bg-blue-600 hover:bg-blue-700 text-white 
+                    {% else %} bg-gray-700 hover:bg-gray-600 text-white {% endif %}">
+                Purchase Plan
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function buyCoins(amount, coins) {
+    fetch('/create_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amount, coins: coins })
+    })
+    .then(response => response.json())
+    .then(order => {
+        if (order.error) {
+            alert('Error creating order: ' + order.error);
+            return;
+        }
+
+        var options = {
+            "key": "{{ RAZORPAY_KEY_ID }}", // Note: It's better to pass this from the backend if possible
+            "amount": order.amount,
+            "currency": order.currency,
+            "name": "AI Stock Analyzer",
+            "description": `Purchase of ${coins} coins`,
+            "order_id": order.id,
+            "handler": function (response){
+                fetch('/verify_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                }).then(verifyResponse => verifyResponse.json())
+                  .then(data => {
+                      if(data.redirect_url) {
+                          window.location.href = data.redirect_url;
+                      }
+                  });
+            },
+            "prefill": {
+                "name": "{{ current_user.username }}",
+                "email": "{{ current_user.email }}"
+            },
+            "theme": {
+                "color": "#2563eb"
+            }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+            window.location.href = "{{ url_for('payment_failure') }}";
+        });
+        rzp1.open();
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}
