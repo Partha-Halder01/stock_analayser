@@ -25,8 +25,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'codemistry359@gmail.com'
-app.config['MAIL_PASSWORD'] = 'ltiq qcdd kjgp thhr'
+app.config['MAIL_USERNAME'] = ''
+app.config['MAIL_PASSWORD'] = ''
 app.config['MAIL_DEFAULT_SENDER'] = 'codemistry359@gmail.com'
 
 
@@ -56,15 +56,15 @@ class ApiKeyManager:
         print(f"Rotated API key to index: {self.current_index}")
 
 # ⚠️ IMPORTANT: Add your unique API keys to these lists
-FMP_API_KEYS = [ "LsmfKGaW7fxlLWkWGCzpaYJwnnlZFcSi" ]
-COHERE_API_KEYS = [ "Jiljedse0jiQkOYwRtJqAzR1mi5m2QG8uMxnfaCl" ]
+FMP_API_KEYS = [ "" ]
+COHERE_API_KEYS = [ "" ]
 
 fmp_key_manager = ApiKeyManager(FMP_API_KEYS)
 cohere_key_manager = ApiKeyManager(COHERE_API_KEYS)
 
 # --- Razorpay Client ---
-RAZORPAY_KEY_ID = "rzp_live_RUTZbUme0C8tge"
-RAZORPAY_KEY_SECRET = "T1np2DCVhLYaT7GiUrjGW8GT"
+RAZORPAY_KEY_ID = ""
+RAZORPAY_KEY_SECRET = ""
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 
